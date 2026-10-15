@@ -28,6 +28,7 @@ public class JobService {
     private final JobMapper jobMapper;
 
     public CreatedRespDto add(Long employerId, JobReqDto dto, String loggedInUsername) {
+
         Employer employer = employerRepository.findById(employerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employer id invalid & Employer not found"));
 
@@ -46,6 +47,7 @@ public class JobService {
 
         job = jobRepository.save(job);
         return new CreatedRespDto(job.getId(), "Job posted");
+
     }
 
     public List<JobRespDto> getActiveJobs(int page, int size) {
