@@ -1,0 +1,73 @@
+package com.springboot.careercrafter.controller;
+
+import com.springboot.careercrafter.dto.request.JobReqDto;
+import com.springboot.careercrafter.dto.response.CreatedRespDto;
+import com.springboot.careercrafter.dto.response.JobRespDto;
+import com.springboot.careercrafter.enums.EmploymentType;
+import com.springboot.careercrafter.service.JobService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+public class JobController {
+
+    private final JobService jobService;
+
+    @PostMapping("/api/job/add/{employerId}")
+    public CreatedRespDto add(@PathVariable Long employerId,
+                              @Valid @RequestBody JobReqDto dto,
+                              Principal principal) {
+        return jobService.add(employerId, dto, principal.getName());
+    }
+
+    @GetMapping("/api/job/all")
+    public List<JobRespDto> getActiveJobs(@RequestParam(defaultValue = "0") int page,
+                                          @RequestParam(defaultValue = "10") int size) {
+        return jobService.getActiveJobs(page, size);
+    }
+
+    @GetMapping("/api/job/filter")
+    public List<JobRespDto> filter(@RequestParam(value = "location", required = false) String location,
+                                   @RequestParam(value = "industry", required = false) String industry,
+                                   @RequestParam(value = "employmentType", required = false) EmploymentType employmentType,
+                                   @RequestParam(value = "minSalary", required = false) Double minSalary,
+                                   @RequestParam(value = "keyword", required = false) String keyword,
+                                   @RequestParam(defaultValue = "0") int page,
+                                   @RequestParam(defaultValue = "10") int size) {
+        return jobService.filter(location, industry, employmentType, minSalary, keyword, page, size);
+    }
+
+    @GetMapping("/api/job/employer/{employerId}")
+    public List<JobRespDto> getByEmployerId(@PathVariable Long employerId,
+                                            @RequestParam(defaultValue = "0") int page,
+                                            @RequestParam(defaultValue = "10") int size) {
+        return jobService.getByEmployerId(employerId, page, size);
+    }
+
+    @GetMapping("/api/job/{id}")
+    public JobRespDto getById(@PathVariable Long id) {
+        return jobService.getById(id);
+    }
+
+    @PutMapping("/api/job/{id}")
+    public void update(@PathVariable Long id,
+                       @Valid @RequestBody JobReqDto dto,
+                       Principal principal) {
+        jobService.update(id, dto, principal.getName());
+    }
+
+    @PutMapping("/api/job/{id}/close")
+    public void close(@PathVariable Long id, Principal principal) {
+        jobService.close(id, principal.getName());
+    }
+
+    @DeleteMapping("/api/job/{id}")
+    public void deleteById(@PathVariable Long id, Principal principal) {
+        jobService.deleteById(id, principal.getName());
+    }
+}
