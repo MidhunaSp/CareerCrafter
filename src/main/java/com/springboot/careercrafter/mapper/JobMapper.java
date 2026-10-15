@@ -7,13 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobMapper {
 
-    public Job mapDtoToEntity(JobReqDto dto) {
+    public static Job mapDtoToEntity(JobReqDto dto) {
         Job job = new Job();
         updateEntity(job, dto);
         return job;
     }
 
-    public void updateEntity(Job job, JobReqDto dto) {
+    public static void updateEntity(Job job, JobReqDto dto) {
         job.setTitle(dto.title());
         job.setDescription(dto.description());
         job.setQualifications(dto.qualifications());
