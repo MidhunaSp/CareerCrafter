@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,27 +19,28 @@ public class ResumeController {
 
     @PostMapping("/api/resume/add/{jobSeekerId}")
     public CreatedRespDto add(@PathVariable Long jobSeekerId,
-                              @Valid @RequestBody ResumeReqDto dto) {
-        return resumeService.add(jobSeekerId, dto);
+                              @Valid @RequestBody ResumeReqDto dto,
+                              Principal principal) {
+        return resumeService.add(jobSeekerId, dto, principal.getName());
     }
 
     @GetMapping("/api/resume/jobseeker/{jobSeekerId}")
-    public List<ResumeRespDto> getByJobSeekerId(@PathVariable Long jobSeekerId) {
-        return resumeService.getByJobSeekerId(jobSeekerId);
+    public List<ResumeRespDto> getByJobSeekerId(@PathVariable Long jobSeekerId, Principal principal) {
+        return resumeService.getByJobSeekerId(jobSeekerId, principal.getName());
     }
 
     @GetMapping("/api/resume/{id}")
-    public ResumeRespDto getById(@PathVariable Long id) {
-        return resumeService.getById(id);
+    public ResumeRespDto getById(@PathVariable Long id, Principal principal) {
+        return resumeService.getById(id, principal.getName());
     }
 
     @PutMapping("/api/resume/{id}/default")
-    public void makeDefault(@PathVariable Long id) {
-        resumeService.makeDefault(id);
+    public void makeDefault(@PathVariable Long id, Principal principal) {
+        resumeService.makeDefault(id, principal.getName());
     }
 
     @DeleteMapping("/api/resume/{id}")
-    public void deleteById(@PathVariable Long id) {
-        resumeService.deleteById(id);
+    public void deleteById(@PathVariable Long id, Principal principal) {
+        resumeService.deleteById(id, principal.getName());
     }
 }

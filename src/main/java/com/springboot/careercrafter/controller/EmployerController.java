@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -52,12 +53,14 @@ public class EmployerController {
     }
 
     @PutMapping("/api/employer/{id}")
-    public void update(@PathVariable Long id, @Valid @RequestBody EmployerUpdateDto dto) {
-        employerService.update(id, dto);
+    public void update(@PathVariable Long id,
+                       @Valid @RequestBody EmployerUpdateDto dto,
+                       Principal principal) {
+        employerService.update(id, dto, principal.getName());
     }
 
     @DeleteMapping("/api/employer/{id}")
-    public void deleteById(@PathVariable Long id) {
-        employerService.deleteById(id);
+    public void deleteById(@PathVariable Long id, Principal principal) {
+        employerService.deleteById(id, principal.getName());
     }
 }

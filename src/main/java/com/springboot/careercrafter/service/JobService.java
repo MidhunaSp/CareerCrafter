@@ -137,7 +137,6 @@ public class JobService {
     }
 
     private void checkSalaryRange(JobReqDto dto) {
-        // step 1: if both salaries are given, minsalary must not exceed maxsalary
         if (dto.minSalary() != null && dto.maxSalary() != null && dto.minSalary() > dto.maxSalary())
             throw new InvalidCallException("Min salary cannot be greater than max salary");
     }

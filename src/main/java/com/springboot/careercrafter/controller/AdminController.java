@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @RequiredArgsConstructor
 public class AdminController {
@@ -19,9 +21,11 @@ public class AdminController {
     }
 
     @PutMapping("/api/employer/verify/{adminId}/{employerId}")
-    public void verifyEmployer(@PathVariable Long adminId,@PathVariable Long employerId) {
-        adminService.verifyEmployer(adminId,employerId);
+    public void verifyEmployer(@PathVariable Long adminId,
+                               @PathVariable Long employerId,
+                               Principal principal) {
+        adminService.verifyEmployer(adminId, employerId, principal.getName());
     }
-}
 
-// /api/employer/verify/1/1
+    // yer/verify/1/1
+}

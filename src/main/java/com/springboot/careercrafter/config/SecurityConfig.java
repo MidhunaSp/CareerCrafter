@@ -31,23 +31,50 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/jobseeker/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/employer/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/admin/add").permitAll()
+
                         // login API
                         .requestMatchers(HttpMethod.GET, "/api/auth/login").authenticated()
-                        // Admin verifies the employer
+
+                        // anyone can browse the jobs
+                        .requestMatchers(HttpMethod.GET, "/api/job/all", "/api/job/filter", "/api/job/{id}").permitAll()
+
+                        // ADMIN
                         .requestMatchers(HttpMethod.PUT, "/api/employer/verify/**").hasAuthority("ADMIN")
-                        // Job seeker apply / resume / save job
-                        .requestMatchers(HttpMethod.POST, "/api/jobApplication/add/**").hasAuthority("JOB_SEEKER")
-                        // stats display to ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/stats/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/resume/add/**").hasAuthority("JOB_SEEKER")
-                        // Employer posts the job
+                        .requestMatchers(HttpMethod.GET, "/api/employer/all", "/api/employer/filter",
+                                "/api/employer/by-verification", "/api/jobseeker/all").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/notification/add/**").hasAuthority("ADMIN")
+
+                        // ADMIN or EMPLOYER (employer searches the candidates)
+                        .requestMatchers(HttpMethod.GET, "/api/jobseeker/filter").hasAnyAuthority("ADMIN", "EMPLOYER")
+
+                        // EMPLOYER
                         .requestMatchers(HttpMethod.POST, "/api/job/add/**").hasAuthority("EMPLOYER")
+                        .requestMatchers(HttpMethod.GET, "/api/job/employer/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.PUT, "/api/job/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.DELETE, "/api/job/**").hasAuthority("EMPLOYER")
+                        .requestMatchers(HttpMethod.GET, "/api/jobApplication/job/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.POST, "/api/applicationStatusHistory/add/**").hasAuthority("EMPLOYER")
-                        .anyRequest().permitAll()
-                );
+                        .requestMatchers(HttpMethod.PUT, "/api/employer/{id}").hasAuthority("EMPLOYER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/employer/{id}").hasAuthority("EMPLOYER")
 
+                        // JOB_SEEKER
+                        .requestMatchers(HttpMethod.POST, "/api/jobApplication/add/**").hasAuthority("JOB_SEEKER")
+                        .requestMatchers(HttpMethod.GET, "/api/jobApplication/applicant/**").hasAuthority("JOB_SEEKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/jobApplication/**").hasAuthority("JOB_SEEKER")
+                        .requestMatchers("/api/resume/**").hasAuthority("JOB_SEEKER")
+                        .requestMatchers("/api/savedJob/**").hasAuthority("JOB_SEEKER")
+                        .requestMatchers(HttpMethod.PUT, "/api/jobseeker/{id}").hasAuthority("JOB_SEEKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/jobseeker/{id}").hasAuthority("JOB_SEEKER")
+
+                        // JOB_SEEKER or EMPLOYER
+                        .requestMatchers(HttpMethod.GET, "/api/jobApplication/{id}").hasAnyAuthority("JOB_SEEKER", "EMPLOYER")
+                        .requestMatchers(HttpMethod.GET, "/api/applicationStatusHistory/**").hasAnyAuthority("JOB_SEEKER", "EMPLOYER")
+                        .requestMatchers("/api/message/**").hasAnyAuthority("JOB_SEEKER", "EMPLOYER")
+
+                        // everything else (notifications, get employer / job seeker...) needs a login
+                        .anyRequest().authenticated()
+                );
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         http.httpBasic(Customizer.withDefaults());
         return http.build();

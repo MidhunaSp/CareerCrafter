@@ -37,3 +37,4 @@ public class StatsController {
         return statsService.getApplicationStatusStat();
     }
 }
+// today is a very good day that i got a very good reply from my trainer.. for showing my project (to showcase what i have developed.. the apis).

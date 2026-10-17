@@ -6,6 +6,7 @@ import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.JobSeekerRespDto;
 import com.springboot.careercrafter.enums.Role;
 import com.springboot.careercrafter.exception.InvalidCallException;
+import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
 import com.springboot.careercrafter.mapper.JobSeekerMapper;
 import com.springboot.careercrafter.model.JobSeeker;
@@ -63,15 +64,17 @@ public class JobSeekerService {
                 .toList();
     }
 
-    public void update(Long id, JobSeekerUpdateDto dto) {
+    public void update(Long id, JobSeekerUpdateDto dto, String loggedInUsername) {
         JobSeeker js = jobSeekerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Job seeker not found"));
+
+        // check that the logged-in user owns this job seeker account
+        if (!js.getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("You can update only your own job seeker account");
+
         boolean flag = false;
 
-        if (StringUtils.hasText(dto.fullName())) {
-            js.setFullName(dto.fullName());
-            flag = true;
-        }
+        if (StringUtils.hasText(dto.fullName())) { js.setFullName(dto.fullName()); flag = true; }
         if (StringUtils.hasText(dto.phone())) { js.setPhone(dto.phone()); flag = true; }
         if (StringUtils.hasText(dto.location())) { js.setLocation(dto.location()); flag = true; }
         if (StringUtils.hasText(dto.education())) { js.setEducation(dto.education()); flag = true; }
@@ -85,9 +88,14 @@ public class JobSeekerService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(Long id, String loggedInUsername) {
         JobSeeker js = jobSeekerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Job seeker not found"));
+
+        // check that the logged-in user owns this job seeker account
+        if (!js.getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("You can delete only your own job seeker account");
+
         User user = js.getUser();
 
         jobSeekerRepository.delete(js);

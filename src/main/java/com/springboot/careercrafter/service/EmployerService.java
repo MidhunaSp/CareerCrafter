@@ -7,6 +7,7 @@ import com.springboot.careercrafter.dto.response.EmployerRespDto;
 import com.springboot.careercrafter.enums.Role;
 import com.springboot.careercrafter.enums.VerificationStatus;
 import com.springboot.careercrafter.exception.InvalidCallException;
+import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
 import com.springboot.careercrafter.mapper.EmployerMapper;
 import com.springboot.careercrafter.model.Employer;
@@ -31,18 +32,30 @@ public class EmployerService {
     private final UserService userService;
 
     public CreatedRespDto add(@Valid EmployerReqDto employerReqDto) {
+        // step 1: prepare user object and save it in db
         User user = userService.createUser(employerReqDto.username(),employerReqDto.password(),Role.EMPLOYER);
+
+        // step 2: map employerreqdto to employer entity
         Employer employer = employerMapper.mapDtoToEntity(employerReqDto);
+
+        // step 3: attach the user to employer
         employer.setUser(user);
+
+        // step 4: set verification status as pending (admin will verify later)
         employer.setVerificationStatus(VerificationStatus.PENDING);
+
+        // step 5: save employer and return id with message
         employer = employerRepository.save(employer);
         return new CreatedRespDto(employer.getId(),"Employer created");
     }
 
     public EmployerRespDto getById(long employerId) {
-       Employer employer = employerRepository.findById(employerId)
-               .orElseThrow(()-> new ResourceNotFoundException("Employer not found"));
-       return employerMapper.mapEntityToDto(employer);
+        // step 1: fetch employer from db using employerid, throw exception if not found
+        Employer employer = employerRepository.findById(employerId)
+                .orElseThrow(()-> new ResourceNotFoundException("Employer not found"));
+
+        // step 2: map employer entity to employerrespdto and return
+        return employerMapper.mapEntityToDto(employer);
     }
 
 
@@ -73,9 +86,14 @@ public class EmployerService {
                 .toList();
     }
 
-    public void update(Long id, EmployerUpdateDto dto) {
+    public void update(Long id, EmployerUpdateDto dto, String loggedInUsername) {
         Employer employer = employerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employer not found"));
+
+        // check that the logged-in user owns this employer account
+        if (!employer.getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("You can update only your own employer account");
+
         boolean flag = false;
 
         if (StringUtils.hasText(dto.fullName())) {
@@ -98,9 +116,14 @@ public class EmployerService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(Long id, String loggedInUsername) {
         Employer employer = employerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employer not found"));
+
+        // check that the logged-in user owns this employer account
+        if (!employer.getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("You can delete only your own employer account");
+
         User user = employer.getUser();
 
         employerRepository.delete(employer);

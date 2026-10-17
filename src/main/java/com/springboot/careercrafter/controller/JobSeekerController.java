@@ -4,12 +4,12 @@ import com.springboot.careercrafter.dto.request.JobSeekerReqDto;
 import com.springboot.careercrafter.dto.request.JobSeekerUpdateDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.JobSeekerRespDto;
-import com.springboot.careercrafter.model.JobSeeker;
 import com.springboot.careercrafter.service.JobSeekerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -48,12 +48,14 @@ public class JobSeekerController {
     }
 
     @PutMapping("/api/jobseeker/{id}")
-    public void update(@PathVariable Long id, @Valid @RequestBody JobSeekerUpdateDto dto) {
-        jobSeekerService.update(id, dto);
+    public void update(@PathVariable Long id,
+                       @Valid @RequestBody JobSeekerUpdateDto dto,
+                       Principal principal) {
+        jobSeekerService.update(id, dto, principal.getName());
     }
 
     @DeleteMapping("/api/jobseeker/{id}")
-    public void deleteById(@PathVariable Long id) {
-        jobSeekerService.deleteById(id);
+    public void deleteById(@PathVariable Long id, Principal principal) {
+        jobSeekerService.deleteById(id, principal.getName());
     }
 }

@@ -4,6 +4,7 @@ import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.JobApplicationRespDto;
 import com.springboot.careercrafter.enums.ApplicationStatus;
 import com.springboot.careercrafter.exception.InvalidCallException;
+import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
 import com.springboot.careercrafter.mapper.JobApplicationMapper;
 import com.springboot.careercrafter.model.ApplicationStatusHistory;
@@ -34,20 +35,25 @@ public class JobApplicationService {
     private final ResumeRepository resumeRepository;
     private final ApplicationStatusHistoryRepository historyRepository;
 
-
     @Transactional
-    public CreatedRespDto apply(Long jobId, Long applicantId, Long resumeId) {
-
+    public CreatedRespDto apply(Long jobId, Long applicantId, Long resumeId, String loggedInUsername) {
+        // step 1: fetch job and applicant
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job id invalid & Job not found"));
         JobSeeker applicant = jobSeekerRepository.findById(applicantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job seeker id invalid & Job seeker not found"));
 
+        // step 2: check that the logged-in user is this applicant
+        if (!applicant.getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("You can apply only with your own job seeker account");
+
+        // step 3: validations
         if (!job.isActive())
             throw new InvalidCallException("Job is no longer active");
         if (jobApplicationRepository.existsByJobIdAndApplicantId(jobId, applicantId))
             throw new InvalidCallException("Already applied to this job");
 
+        // step 4: resume is optional, but if given it must belong to the applicant
         Resume resume = null;
         if (resumeId != null) {
             resume = resumeRepository.findById(resumeId)
@@ -56,6 +62,7 @@ public class JobApplicationService {
                 throw new InvalidCallException("Resume does not belong to this applicant");
         }
 
+        // step 5: build application with status APPLIED and save
         JobApplication application = new JobApplication();
         application.setJob(job);
         application.setApplicant(applicant);
@@ -63,6 +70,7 @@ public class JobApplicationService {
         application.setStatus(ApplicationStatus.APPLIED);
         application = jobApplicationRepository.save(application);
 
+        // step 6: first row in the status timeline
         ApplicationStatusHistory history = new ApplicationStatusHistory();
         history.setJobApplication(application);
         history.setStatus(ApplicationStatus.APPLIED);
@@ -72,36 +80,58 @@ public class JobApplicationService {
         return new CreatedRespDto(application.getId(), "Applied successfully");
     }
 
-    public List<JobApplicationRespDto> getByApplicantId(Long applicantId, int page, int size) {
-        if (!jobSeekerRepository.existsById(applicantId))
-            throw new ResourceNotFoundException("Job seeker not found");
+    public List<JobApplicationRespDto> getByApplicantId(Long applicantId, int page, int size, String loggedInUsername) {
+        JobSeeker applicant = jobSeekerRepository.findById(applicantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job seeker not found"));
+
+        // only the applicant can see his own applications
+        if (!applicant.getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("These applications belong to another job seeker");
+
         return jobApplicationRepository.findByApplicantIdWithDetails(applicantId, PageRequest.of(page, size))
                 .stream()
                 .map(jobApplicationMapper::mapEntityToDto)
                 .toList();
     }
 
-    public List<JobApplicationRespDto> getByJobId(Long jobId, ApplicationStatus status, int page, int size) {
-        if (!jobRepository.existsById(jobId))
-            throw new ResourceNotFoundException("Job not found");
+    public List<JobApplicationRespDto> getByJobId(Long jobId, ApplicationStatus status, int page, int size,
+                                                  String loggedInUsername) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+
+        // only the employer who posted the job can see its applicants
+        if (!job.getEmployer().getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("This job belongs to another employer");
+
         return jobApplicationRepository.findByJobIdWithDetails(jobId, status, PageRequest.of(page, size))
                 .stream()
                 .map(jobApplicationMapper::mapEntityToDto)
                 .toList();
     }
 
-    public JobApplicationRespDto getById(Long id) {
+    public JobApplicationRespDto getById(Long id, String loggedInUsername) {
         JobApplication ja = jobApplicationRepository.findDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Job application not found"));
+
+        // only the applicant and the employer of the job can see an application
+        String applicantUsername = ja.getApplicant().getUser().getUsername();
+        String employerUsername = ja.getJob().getEmployer().getUser().getUsername();
+        if (!loggedInUsername.equals(applicantUsername) && !loggedInUsername.equals(employerUsername))
+            throw new OwnershipException("This application does not belong to you");
+
         return jobApplicationMapper.mapEntityToDto(ja);
     }
 
     @Transactional
-    public void withdraw(Long id) {
-        if (!jobApplicationRepository.existsById(id))
-            throw new ResourceNotFoundException("Job application not found");
+    public void withdraw(Long id, String loggedInUsername) {
+        JobApplication application = jobApplicationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job application not found"));
+
+        // only the applicant can withdraw his application
+        if (!application.getApplicant().getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("You can withdraw only your own applications");
 
         historyRepository.deleteByJobApplicationId(id);
-        jobApplicationRepository.deleteById(id);
+        jobApplicationRepository.delete(application);
     }
 }

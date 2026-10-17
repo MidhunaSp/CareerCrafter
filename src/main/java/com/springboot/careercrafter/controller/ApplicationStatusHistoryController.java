@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,17 +19,14 @@ public class ApplicationStatusHistoryController {
 
     @PostMapping("/api/applicationStatusHistory/add/{jobApplicationId}")
     public CreatedRespDto add(@PathVariable Long jobApplicationId,
-                              @Valid @RequestBody ApplicationStatusHistoryReqDto dto) {
-        return historyService.add(jobApplicationId, dto);
+                              @Valid @RequestBody ApplicationStatusHistoryReqDto dto,
+                              Principal principal) {
+        return historyService.add(jobApplicationId, dto, principal.getName());
     }
 
     @GetMapping("/api/applicationStatusHistory/{jobApplicationId}")
-    public List<ApplicationStatusHistoryRespDto> getTimeline(@PathVariable Long jobApplicationId) {
-        return historyService.getTimeline(jobApplicationId);
-    }
-
-    @DeleteMapping("/api/applicationStatusHistory/{jobApplicationId}")
-    public void deleteApplicationStatusHistory(@PathVariable Long jobApplicationId) {
-        historyService.delete(jobApplicationId);
+    public List<ApplicationStatusHistoryRespDto> getTimeline(@PathVariable Long jobApplicationId,
+                                                             Principal principal) {
+        return historyService.getTimeline(jobApplicationId, principal.getName());
     }
 }
