@@ -3,6 +3,7 @@ package com.springboot.careercrafter.utility;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
@@ -13,7 +14,8 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtility {
-    private String SECRET_KEY = "f1112c1802b1994781e932ba7b986bccd309bc48aa37b0a371073e614f899c02";
+    @Value("${jwt.secret}")
+    private String SECRET_KEY;
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();

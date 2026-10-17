@@ -27,7 +27,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        // onboarding APIs
+                        // onboarding APIs (Registration)
                         .requestMatchers(HttpMethod.POST, "/api/jobseeker/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/employer/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/admin/add").permitAll()
@@ -45,7 +45,7 @@ public class SecurityConfig {
                                 "/api/employer/by-verification", "/api/jobseeker/all").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/notification/add/**").hasAuthority("ADMIN")
 
-                        // ADMIN or EMPLOYER (employer searches the candidates)
+                        // ADMIN OR EMPLOYER (employer searches the candidates)
                         .requestMatchers(HttpMethod.GET, "/api/jobseeker/filter").hasAnyAuthority("ADMIN", "EMPLOYER")
 
                         // EMPLOYER
