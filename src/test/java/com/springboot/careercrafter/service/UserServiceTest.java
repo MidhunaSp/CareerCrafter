@@ -1,0 +1,76 @@
+package com.springboot.careercrafter.service;
+
+import com.springboot.careercrafter.enums.Role;
+import com.springboot.careercrafter.exception.InvalidCallException;
+import com.springboot.careercrafter.model.User;
+import com.springboot.careercrafter.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class UserServiceTest {
+
+    @InjectMocks
+    private UserService userService;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    // ---- Valid Test ----
+    @Test
+    public void createUserTest() {
+        User savedUser = new User();
+        savedUser.setUsername("john");
+        savedUser.setPassword("pass2");
+        savedUser.setRole(Role.JOB_SEEKER);
+
+        when(userRepository.existsByUsername("john")).thenReturn(false);
+        when(passwordEncoder.encode("pass1")).thenReturn("pass2");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        User result = userService.createUser("john", "pass1", Role.JOB_SEEKER);
+
+        assertEquals("john", result.getUsername());
+        assertEquals(Role.JOB_SEEKER, result.getRole());
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, times(1)).save(captor.capture());
+        assertEquals("pass2", captor.getValue().getPassword());
+        assertEquals("john", captor.getValue().getUsername());
+        assertEquals(Role.JOB_SEEKER, captor.getValue().getRole());
+
+        verify(userRepository, times(1)).existsByUsername("john");
+        verify(passwordEncoder, times(1)).encode("pass1");
+
+        verifyNoMoreInteractions(userRepository);
+        verifyNoMoreInteractions(passwordEncoder);
+    }
+
+    // ---- Invalid Test ----
+    @Test
+    public void createUserTest_UsernameTaken() {
+        when(userRepository.existsByUsername("john")).thenReturn(true);
+
+        assertThrows(InvalidCallException.class,
+                () -> userService.createUser("john", "pass1", Role.JOB_SEEKER));
+
+        verify(userRepository, times(1)).existsByUsername("john");
+
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
+
+        verifyNoMoreInteractions(userRepository);
+        verifyNoMoreInteractions(passwordEncoder);
+    }
+}
