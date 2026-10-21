@@ -9,6 +9,7 @@ import com.springboot.careercrafter.model.ApplicationStatusHistory;
 import com.springboot.careercrafter.model.Job;
 import com.springboot.careercrafter.model.JobApplication;
 import com.springboot.careercrafter.model.JobSeeker;
+import com.springboot.careercrafter.model.Resume;
 import com.springboot.careercrafter.model.User;
 import com.springboot.careercrafter.repository.ApplicationStatusHistoryRepository;
 import com.springboot.careercrafter.repository.JobApplicationRepository;
@@ -123,12 +124,17 @@ public class JobApplicationServiceTest {
         applicant.setId(1L);
         applicant.setUser(user);
 
+        // resumeId is null in apply(), so the service looks for the applicant's default resume
+        Resume resume = new Resume();
+        resume.setId(1L);
+
         JobApplication savedApplication = new JobApplication();
         savedApplication.setId(10L);
 
         when(jobRepository.findById(jobId)).thenReturn(Optional.of(job));
         when(jobSeekerRepository.findById(applicantId)).thenReturn(Optional.of(applicant));
         when(jobApplicationRepository.existsByJobIdAndApplicantId(jobId, applicantId)).thenReturn(false);
+        when(resumeRepository.findDefaultResume(applicantId)).thenReturn(Optional.of(resume));
 
         when(jobApplicationRepository.save(any(JobApplication.class))).thenReturn(savedApplication);
 
@@ -141,6 +147,7 @@ public class JobApplicationServiceTest {
         verify(jobRepository, times(1)).findById(jobId);
         verify(jobSeekerRepository, times(1)).findById(applicantId);
         verify(jobApplicationRepository, times(1)).existsByJobIdAndApplicantId(jobId, applicantId);
+        verify(resumeRepository, times(1)).findDefaultResume(applicantId);
         verify(jobApplicationRepository, times(1)).save(any(JobApplication.class));
         verify(historyRepository, times(1)).save(any(ApplicationStatusHistory.class));
 
