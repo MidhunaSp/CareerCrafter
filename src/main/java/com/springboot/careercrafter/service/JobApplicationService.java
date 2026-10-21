@@ -19,11 +19,13 @@ import com.springboot.careercrafter.repository.JobSeekerRepository;
 import com.springboot.careercrafter.repository.ResumeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JobApplicationService {
@@ -53,13 +55,17 @@ public class JobApplicationService {
         if (jobApplicationRepository.existsByJobIdAndApplicantId(jobId, applicantId))
             throw new InvalidCallException("Already applied to this job");
 
-        // step 4: resume is optional, but if given it must belong to the applicant
-        Resume resume = null;
+        // step 4: if resumeId is given it must belong to the applicant,
+        // else use the default resume of the applicant
+        Resume resume;
         if (resumeId != null) {
             resume = resumeRepository.findById(resumeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Resume id invalid & Resume not found"));
             if (!resume.getJobSeeker().getId().equals(applicantId))
                 throw new InvalidCallException("Resume does not belong to this applicant");
+        } else {
+            resume = resumeRepository.findDefaultResume(applicantId)
+                    .orElseThrow(() -> new InvalidCallException("Upload a resume before applying"));
         }
 
         // step 5: build application with status APPLIED and save
@@ -76,6 +82,9 @@ public class JobApplicationService {
         history.setStatus(ApplicationStatus.APPLIED);
         history.setNote("Application submitted");
         historyRepository.save(history);
+
+        log.info("Job application submitted: applicationId={}, jobId={}, applicantId={}",
+                application.getId(), jobId, applicantId);
 
         return new CreatedRespDto(application.getId(), "Applied successfully");
     }
@@ -133,5 +142,6 @@ public class JobApplicationService {
 
         historyRepository.deleteByJobApplicationId(id);
         jobApplicationRepository.delete(application);
+        log.info("Job application withdrawn: id={} by {}", id, loggedInUsername);
     }
 }

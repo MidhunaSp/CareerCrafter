@@ -15,4 +15,5 @@ public interface ApplicationStatusHistoryRepository extends JpaRepository<Applic
     @Modifying
     @Query("delete from ApplicationStatusHistory h where h.jobApplication.id = ?1")
     void deleteByJobApplicationId(Long jobApplicationId);
+
 }

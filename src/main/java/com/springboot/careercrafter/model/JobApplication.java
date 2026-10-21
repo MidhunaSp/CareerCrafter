@@ -28,7 +28,7 @@ public class JobApplication {
     private JobSeeker applicant;
 
     @ManyToOne
-    @JoinColumn(name = "resume_id")
+    @JoinColumn(name = "resume_id", nullable = false)
     private Resume resume;
 
     @Enumerated(EnumType.STRING)

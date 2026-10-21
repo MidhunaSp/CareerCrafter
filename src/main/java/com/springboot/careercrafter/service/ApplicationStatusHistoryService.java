@@ -3,6 +3,8 @@ package com.springboot.careercrafter.service;
 import com.springboot.careercrafter.dto.request.ApplicationStatusHistoryReqDto;
 import com.springboot.careercrafter.dto.response.ApplicationStatusHistoryRespDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
+import com.springboot.careercrafter.dto.response.EmployerApplicationHistoryRespDto;
+import com.springboot.careercrafter.enums.ApplicationStatus;
 import com.springboot.careercrafter.exception.InvalidCallException;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
@@ -13,10 +15,13 @@ import com.springboot.careercrafter.repository.ApplicationStatusHistoryRepositor
 import com.springboot.careercrafter.repository.JobApplicationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ApplicationStatusHistoryService {
@@ -40,6 +45,7 @@ public class ApplicationStatusHistoryService {
             throw new InvalidCallException("Application is already in status " + dto.status());
 
         // step 4: keep job_applications.status in sync with the latest history entry
+        ApplicationStatus oldStatus = application.getStatus();
         application.setStatus(dto.status());
         jobApplicationRepository.save(application);
 
@@ -48,6 +54,9 @@ public class ApplicationStatusHistoryService {
         history.setJobApplication(application);
 
         history = historyRepository.save(history);
+
+        log.info("Application {} status changed: {} -> {} by {}",
+                jobApplicationId, oldStatus, dto.status(), loggedInUsername);
         return new CreatedRespDto(history.getId(), "Status history added");
     }
 
@@ -66,6 +75,21 @@ public class ApplicationStatusHistoryService {
                 .map(historyMapper::mapEntityToDto)
                 .toList();
     }
+
+    public List<EmployerApplicationHistoryRespDto> getAllEmployerHistories(String loggedInUsername) {
+        List<JobApplication> applications = jobApplicationRepository.findAllByEmployerUsername(loggedInUsername);
+
+        List<EmployerApplicationHistoryRespDto> result = new ArrayList<>();
+        for (JobApplication application : applications) {
+            List<ApplicationStatusHistoryRespDto> historyDtos = new ArrayList<>();
+            for (ApplicationStatusHistory h : historyRepository.findByJobApplicationIdOrderByChangedAtAsc(application.getId())) {
+                historyDtos.add(historyMapper.mapEntityToDto(h));
+            }
+            result.add(historyMapper.mapToEmployerHistoryDto(application, historyDtos));
+        }
+        return result;
+    }
+
 
 //    public void delete(Long jobApplicationId) {
 //        historyRepository.deleteById(jobApplicationId);

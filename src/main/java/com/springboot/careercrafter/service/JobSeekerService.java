@@ -16,11 +16,13 @@ import com.springboot.careercrafter.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JobSeekerService {
@@ -35,6 +37,7 @@ public class JobSeekerService {
         JobSeeker jobSeeker = jobSeekerMapper.mapDtoToEntity(jobSeekerReqDto);
         jobSeeker.setUser(user);
         jobSeeker = jobSeekerRepository.save(jobSeeker);
+        log.info("Job seeker registered: id={}", jobSeeker.getId());
         return new CreatedRespDto(jobSeeker.getId(),"JobSeeker created");
     }
 
@@ -101,5 +104,6 @@ public class JobSeekerService {
         jobSeekerRepository.delete(js);
         userRepository.delete(user);
         userRepository.flush();
+        log.info("Job seeker account deleted: id={}, username={}", id, loggedInUsername);
     }
 }

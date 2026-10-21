@@ -27,5 +27,5 @@ public class AdminController {
         adminService.verifyEmployer(adminId, employerId, principal.getName());
     }
 
-    // yer/verify/1/1
+    // employer/verify/1/1
 }

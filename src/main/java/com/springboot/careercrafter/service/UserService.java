@@ -5,9 +5,11 @@ import com.springboot.careercrafter.exception.InvalidCallException;
 import com.springboot.careercrafter.model.User;
 import com.springboot.careercrafter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -23,6 +25,7 @@ public class UserService {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(role);
+        log.info("User created: username={}, role={}", username, role);
         return userRepository.save(user);
     }
 }

@@ -43,4 +43,12 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
             group by ja.status
             """)
     List<ApplicationStatusStatDto> getApplicationStatusStat();
+
+    @Query("""
+        select ja from JobApplication ja
+        where ja.job.employer.user.username = ?1
+        order by ja.appliedAt desc
+        """)
+    List<JobApplication> findAllByEmployerUsername(String username);
+
 }

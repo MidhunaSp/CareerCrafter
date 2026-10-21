@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/applicationStatusHistory/add/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.PUT, "/api/employer/{id}").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.DELETE, "/api/employer/{id}").hasAuthority("EMPLOYER")
+                        .requestMatchers(HttpMethod.GET, "/api/applicationStatusHistory/employer/**").hasAuthority("EMPLOYER")
 
                         // JOB_SEEKER
                         .requestMatchers(HttpMethod.POST, "/api/jobApplication/add/**").hasAuthority("JOB_SEEKER")

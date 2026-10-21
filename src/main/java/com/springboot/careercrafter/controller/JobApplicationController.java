@@ -16,7 +16,9 @@ public class JobApplicationController {
 
     private final JobApplicationService jobApplicationService;
 
-    // resumeId is optional  ->  /api/jobApplication/add/1/1?resumeId=1
+    // resumeId is optional (default resume is used if not given)  ->  /api/jobApplication/add/1/1?resumeId=1
+    // with resume    ->  /api/jobApplication/add/1/1?resumeId=1 ( adds the exact resume)
+    // without resume ->  /api/jobApplication/add/1/1 ( if resume id is not given then default resume is added to apply for the job)
     @PostMapping("/api/jobApplication/add/{jobId}/{applicantId}")
     public CreatedRespDto apply(@PathVariable Long jobId,
                                 @PathVariable Long applicantId,

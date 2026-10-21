@@ -3,6 +3,7 @@ package com.springboot.careercrafter.controller;
 import com.springboot.careercrafter.dto.request.ApplicationStatusHistoryReqDto;
 import com.springboot.careercrafter.dto.response.ApplicationStatusHistoryRespDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
+import com.springboot.careercrafter.dto.response.EmployerApplicationHistoryRespDto;
 import com.springboot.careercrafter.service.ApplicationStatusHistoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +29,11 @@ public class ApplicationStatusHistoryController {
     public List<ApplicationStatusHistoryRespDto> getTimeline(@PathVariable Long jobApplicationId,
                                                              Principal principal) {
         return historyService.getTimeline(jobApplicationId, principal.getName());
+    }
+
+
+    @GetMapping("/api/applicationStatusHistory/employer/all")
+    public List<EmployerApplicationHistoryRespDto> getAllEmployerHistories(Principal principal) {
+        return historyService.getAllEmployerHistories(principal.getName());
     }
 }

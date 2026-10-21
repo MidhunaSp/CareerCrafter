@@ -17,11 +17,13 @@ import com.springboot.careercrafter.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmployerService {
@@ -46,6 +48,7 @@ public class EmployerService {
 
         // step 5: save employer and return id with message
         employer = employerRepository.save(employer);
+        log.info("Employer registered: id={}, company={}", employer.getId(), employer.getCompanyName());
         return new CreatedRespDto(employer.getId(),"Employer created");
     }
 
@@ -129,6 +132,6 @@ public class EmployerService {
         employerRepository.delete(employer);
         userRepository.delete(user);
         userRepository.flush();
+        log.info("Employer account deleted: id={}, username={}", id, loggedInUsername);
     }
-
 }

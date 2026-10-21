@@ -3,6 +3,7 @@ package com.springboot.careercrafter.service;
 import com.springboot.careercrafter.dto.request.NotificationReqDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.NotificationRespDto;
+import com.springboot.careercrafter.enums.NotificationType;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
 import com.springboot.careercrafter.model.Notification;
@@ -21,7 +22,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
-    // called by the ADMIN (SecurityConfig), so no ownership check here
+    // called by the ADMIN (SecurityConfig)
     public CreatedRespDto add(Long userId, NotificationReqDto dto) {
 
         // step 1: fetch the user the notification is for
@@ -33,7 +34,7 @@ public class NotificationService {
         notification.setUser(user);
         notification.setMessage(dto.message());
         notification.setType(dto.type());
-        notification.setRead(false); // Lombok: boolean isRead -> setRead()
+        notification.setRead(false);
 
         notification = notificationRepository.save(notification);
         return new CreatedRespDto(notification.getId(), "Notification created");
@@ -71,5 +72,14 @@ public class NotificationService {
     private void checkOwner(Notification notification, String loggedInUsername) {
         if (!notification.getUser().getUsername().equals(loggedInUsername))
             throw new OwnershipException("This notification belongs to another user");
+    }
+
+    public void notifyUser(User user, String message, NotificationType type) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(message);
+        notification.setType(type);
+        notification.setRead(false);
+        notificationRepository.save(notification);
     }
 }

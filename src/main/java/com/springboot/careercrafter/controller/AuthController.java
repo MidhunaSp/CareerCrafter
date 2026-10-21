@@ -3,12 +3,14 @@ package com.springboot.careercrafter.controller;
 import com.springboot.careercrafter.dto.response.TokenDto;
 import com.springboot.careercrafter.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
@@ -21,6 +23,7 @@ public class AuthController {
     public TokenDto login(Principal principal) {
         String loggedInUsername = principal.getName();
         String token = jwtUtility.generateToken(loggedInUsername);
+        log.info("User logged in: {}", loggedInUsername);
         return new TokenDto(token,
                 jwtUtility.extractExpiration(token),
                 LocalDateTime.now().toString());

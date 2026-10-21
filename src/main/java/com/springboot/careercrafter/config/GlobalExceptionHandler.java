@@ -4,6 +4,7 @@ import com.springboot.careercrafter.dto.response.ErrorRespDto;
 import com.springboot.careercrafter.exception.InvalidCallException;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,11 +19,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorRespDto> handleResourceNotFoundException(ResourceNotFoundException e) {
+        log.warn("Resource not found: {}", e.getMessage());
         return ResponseEntity.badRequest().body(
                 new ErrorRespDto(e.getMessage(),
                         "ID is not in DB",
@@ -37,7 +40,10 @@ public class GlobalExceptionHandler {
 
         BindingResult bindingResult = e.getBindingResult();
         List<FieldError> list = bindingResult.getFieldErrors();
-        list.forEach(fieldError -> map.put(fieldError.getField(), fieldError.getDefaultMessage()));
+        list.forEach(fieldError -> {
+            map.put(fieldError.getField(), fieldError.getDefaultMessage());
+            log.warn("Field {} failed validation: {}", fieldError.getField(), fieldError.getDefaultMessage());
+        });
 
         return ResponseEntity
                 .badRequest()
@@ -46,6 +52,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCallException.class)
     public ResponseEntity<ErrorRespDto> handleInvalidCallException(InvalidCallException e) {
+        log.warn("Invalid call: {}", e.getMessage());
         return ResponseEntity
                 .badRequest()
                 .body(
@@ -57,6 +64,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorRespDto> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("Unreadable request body: {}", e.getMostSpecificCause().getMessage());
         return ResponseEntity
                 .badRequest()
                 .body(new ErrorRespDto("Request body is invalid",
@@ -66,6 +74,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OwnershipException.class)
     public ResponseEntity<ErrorRespDto> handleOwnershipException(OwnershipException e) {
+        log.warn("Ownership violation: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(new ErrorRespDto(e.getMessage(),

@@ -2,6 +2,7 @@ package com.springboot.careercrafter.service;
 
 import com.springboot.careercrafter.dto.request.AdminReqDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
+import com.springboot.careercrafter.enums.NotificationType;
 import com.springboot.careercrafter.enums.Role;
 import com.springboot.careercrafter.enums.VerificationStatus;
 import com.springboot.careercrafter.exception.InvalidCallException;
@@ -15,8 +16,10 @@ import com.springboot.careercrafter.repository.AdminRepository;
 import com.springboot.careercrafter.repository.EmployerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -25,6 +28,7 @@ public class AdminService {
     private final AdminMapper adminMapper;
     private final AdminRepository adminRepository;
     private final EmployerRepository employerRepository;
+    private final NotificationService notificationService;
 
     public CreatedRespDto add(@Valid AdminReqDto adminReqDto) {
         User user = userService.createUser(adminReqDto.username(),adminReqDto.password(),Role.ADMIN);
@@ -54,5 +58,12 @@ public class AdminService {
         // step 5: mark as verified and save
         employer.setVerificationStatus(VerificationStatus.VERIFIED);
         employerRepository.save(employer);
+        log.info("Admin {} verified employer {} ({})", loggedInUsername, employerId, employer.getCompanyName());
+
+        // step 6: notify employer that his/her acc is verified and they can post jobs
+        notificationService.notifyUser(employer.getUser(),
+                "Your employer account for " + employer.getCompanyName()
+                        + " has been verified. You can now post jobs.",
+                NotificationType.SYSTEM);
     }
 }

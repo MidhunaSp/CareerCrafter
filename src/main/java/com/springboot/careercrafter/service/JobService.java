@@ -14,11 +14,13 @@ import com.springboot.careercrafter.model.Job;
 import com.springboot.careercrafter.repository.EmployerRepository;
 import com.springboot.careercrafter.repository.JobRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JobService {
@@ -52,6 +54,7 @@ public class JobService {
 
         // step 7: save job and return id with message
         job = jobRepository.save(job);
+        log.info("Job posted: id={}, employerId={}, title={}", job.getId(), employerId, job.getTitle());
         return new CreatedRespDto(job.getId(), "Job posted");
     }
 
@@ -115,6 +118,7 @@ public class JobService {
 
         // step 4: save the job
         jobRepository.save(job);
+        log.info("Job closed: id={} by {}", id, loggedInUsername);
     }
 
     public void deleteById(Long id, String loggedInUsername) {
@@ -127,6 +131,7 @@ public class JobService {
 
         // step 3: delete the job from db
         jobRepository.delete(job);
+        log.info("Job deleted: id={} by {}", id, loggedInUsername);
     }
 
     private void checkOwner(Job job, String loggedInUsername) {

@@ -12,10 +12,12 @@ import com.springboot.careercrafter.repository.JobSeekerRepository;
 import com.springboot.careercrafter.repository.ResumeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResumeService {
@@ -88,11 +90,33 @@ public class ResumeService {
         resumeRepository.saveAll(all);
     }
 
+
+    @Transactional
     public void deleteById(Long id, String loggedInUsername) {
         Resume resume = resumeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Resume not found"));
+
         checkOwner(resume, loggedInUsername);
+
+        Long jobSeekerId = resume.getJobSeeker().getId();
+        boolean wasDefault = resume.isDefault();
+
         resumeRepository.delete(resume);
+        log.info("Resume deleted: id={} by {}", id, loggedInUsername);
+        resumeRepository.flush();
+
+        if (wasDefault) {
+            List<Resume> remaining =
+                    resumeRepository.findByJobSeekerIdOrderByUploadedAtDesc(
+                            jobSeekerId);
+
+            if (!remaining.isEmpty()) {
+                Resume newDefault = remaining.get(0);
+                newDefault.setDefault(true);
+                resumeRepository.save(newDefault);
+            }
+        }
     }
 
     private void checkOwner(Resume resume, String loggedInUsername) {
