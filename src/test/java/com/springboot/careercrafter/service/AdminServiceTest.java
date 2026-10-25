@@ -24,15 +24,13 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminServiceTest {
 
     @InjectMocks
-    private AdminService adminService;
+    private AdminService adminService; // real service, mocks below are injected into it
     @Mock
     private UserService userService;
     @Mock
@@ -44,10 +42,10 @@ public class AdminServiceTest {
     @Mock
     private NotificationService notificationService;
 
-    // ---- add : Valid Test ----
+    // ---- add : valid ----
     @Test
     public void addTest() {
-        AdminReqDto dto = new AdminReqDto("Admin One", "admin1", "pass1");
+        AdminReqDto dto = new AdminReqDto("Admin1", "admin1", "pass1");
 
         User user = new User();
         user.setUsername("admin1");
@@ -78,7 +76,7 @@ public class AdminServiceTest {
         verifyNoMoreInteractions(adminRepository);
     }
 
-    // ---- add : Invalid Test (username already taken -> UserService throws) ----
+    // ---- add : username already taken ----
     @Test
     public void addTest_UsernameTaken() {
         AdminReqDto dto = new AdminReqDto("Admin One", "admin1", "pass1");
@@ -91,13 +89,11 @@ public class AdminServiceTest {
         verify(userService, times(1)).createUser("admin1", "pass1", Role.ADMIN);
 
         // nothing should be mapped or saved
-        verify(adminMapper, never()).mapDtoToEntity(any(AdminReqDto.class));
-        verify(adminRepository, never()).save(any(Admin.class));
-
-        verifyNoMoreInteractions(userService);
+        verifyNoMoreInteractions(adminMapper);
+        verifyNoMoreInteractions(adminRepository);
     }
 
-    // ---- verifyEmployer : Valid Test ----
+    // ---- verifyEmployer : valid ----
     @Test
     public void verifyEmployerTest() {
         User adminUser = new User();
@@ -134,7 +130,7 @@ public class AdminServiceTest {
         verifyNoMoreInteractions(notificationService);
     }
 
-    // ---- verifyEmployer : Invalid Test (admin id not found) ----
+    // ---- verifyEmployer : admin not found ----
     @Test
     public void verifyEmployerTest_AdminNotFound() {
         when(adminRepository.findById(7L)).thenReturn(Optional.empty());
@@ -143,14 +139,14 @@ public class AdminServiceTest {
                 () -> adminService.verifyEmployer(7L, 2L, "admin1"));
 
         verify(adminRepository, times(1)).findById(7L);
-        verify(employerRepository, never()).findById(anyLong());
-        verify(employerRepository, never()).save(any(Employer.class));
-        verify(notificationService, never()).notifyUser(any(User.class), anyString(), any(NotificationType.class));
 
+        // nothing else should be called
         verifyNoMoreInteractions(adminRepository);
+        verifyNoMoreInteractions(employerRepository);
+        verifyNoMoreInteractions(notificationService);
     }
 
-    // ---- verifyEmployer : Invalid Test (logged-in user is not this admin) ----
+    // ---- verifyEmployer : logged in user is not this admin ----
     @Test
     public void verifyEmployerTest_NotOwner() {
         User adminUser = new User();
@@ -165,14 +161,14 @@ public class AdminServiceTest {
                 () -> adminService.verifyEmployer(1L, 2L, "someoneElse"));
 
         verify(adminRepository, times(1)).findById(1L);
-        verify(employerRepository, never()).findById(anyLong());
-        verify(employerRepository, never()).save(any(Employer.class));
-        verify(notificationService, never()).notifyUser(any(User.class), anyString(), any(NotificationType.class));
 
+        // employer is not touched and nobody is notified
         verifyNoMoreInteractions(adminRepository);
+        verifyNoMoreInteractions(employerRepository);
+        verifyNoMoreInteractions(notificationService);
     }
 
-    // Invalid Test (employer id not found)
+    // ---- verifyEmployer : employer not found ----
     @Test
     public void verifyEmployerTest_EmployerNotFound() {
         User adminUser = new User();
@@ -189,14 +185,14 @@ public class AdminServiceTest {
 
         verify(adminRepository, times(1)).findById(1L);
         verify(employerRepository, times(1)).findById(9L);
-        verify(employerRepository, never()).save(any(Employer.class));
-        verify(notificationService, never()).notifyUser(any(User.class), anyString(), any(NotificationType.class));
 
+        // employer is not saved and nobody is notified
         verifyNoMoreInteractions(adminRepository);
         verifyNoMoreInteractions(employerRepository);
+        verifyNoMoreInteractions(notificationService);
     }
 
-    // Invalid Test (employer already verified)
+    // ---- verifyEmployer : employer already verified ----
     @Test
     public void verifyEmployerTest_AlreadyVerified() {
         User adminUser = new User();
@@ -217,10 +213,10 @@ public class AdminServiceTest {
 
         verify(adminRepository, times(1)).findById(1L);
         verify(employerRepository, times(1)).findById(2L);
-        verify(employerRepository, never()).save(any(Employer.class));
-        verify(notificationService, never()).notifyUser(any(User.class), anyString(), any(NotificationType.class));
 
+        // employer is not saved again and nobody is notified
         verifyNoMoreInteractions(adminRepository);
         verifyNoMoreInteractions(employerRepository);
+        verifyNoMoreInteractions(notificationService);
     }
 }

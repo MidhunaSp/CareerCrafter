@@ -6,7 +6,6 @@ import com.springboot.careercrafter.model.User;
 import com.springboot.careercrafter.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,14 +13,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
     @InjectMocks
-    private UserService userService;
+    private UserService userService; // real service, mocks below are injected into it
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -42,16 +40,12 @@ public class UserServiceTest {
         User result = userService.createUser("john", "pass1", Role.JOB_SEEKER);
 
         assertEquals("john", result.getUsername());
+        assertEquals("pass2", result.getPassword());
         assertEquals(Role.JOB_SEEKER, result.getRole());
-
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository, times(1)).save(captor.capture());
-        assertEquals("pass2", captor.getValue().getPassword());
-        assertEquals("john", captor.getValue().getUsername());
-        assertEquals(Role.JOB_SEEKER, captor.getValue().getRole());
 
         verify(userRepository, times(1)).existsByUsername("john");
         verify(passwordEncoder, times(1)).encode("pass1");
+        verify(userRepository, times(1)).save(any(User.class));
 
         verifyNoMoreInteractions(userRepository);
         verifyNoMoreInteractions(passwordEncoder);
@@ -67,8 +61,9 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).existsByUsername("john");
 
-        verify(passwordEncoder, never()).encode(anyString());
-        verify(userRepository, never()).save(any(User.class));
+        // password must not be encoded and user must not be saved
+        verify(passwordEncoder, times(0)).encode("pass1");
+        verify(userRepository, times(0)).save(any(User.class));
 
         verifyNoMoreInteractions(userRepository);
         verifyNoMoreInteractions(passwordEncoder);

@@ -91,4 +91,15 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             group by j.industry
             """)
     List<IndustryCountDto> getJobCountByIndustry();
+
+    @Query("""
+        select new com.springboot.careercrafter.dto.response.JobRespDto(
+        j.id, j.title, j.description, j.qualifications, j.location, j.industry,
+        j.employmentType, j.minSalary, j.maxSalary, j.applicationInstructions,
+        j.active, j.createdAt, e.id, e.companyName)
+        from Job j
+        join j.employer e
+        where j.active = true
+        """)
+    List<JobRespDto> getAllActiveJobs();
 }
