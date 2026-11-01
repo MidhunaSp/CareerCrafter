@@ -131,4 +131,44 @@ public class EmployerServiceTest {
         verify(employerMapper, times(1)).mapDtoToEntity(employerReqDto);
         verify(employerRepository, times(1)).save(any(Employer.class));
     }
+
+    @Test
+    public void getByUsernameTest_Invalid() {
+        when(employerRepository.findByUserUsername("nobody")).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> employerService.getByUsername("nobody"));
+    }
+
+    private Employer employer(String username) {
+        User user = new User();
+        user.setUsername(username);
+        Employer e = new Employer();
+        e.setId(1L);
+        e.setUser(user);
+        return e;
+    }
+
+    // ---- getAll ----
+    @Test
+    public void getAllTest() {
+        Employer employer1 = new Employer();
+        employer1.setId(1L);
+        Employer employer2 = new Employer();
+        employer2.setId(2L);
+
+        EmployerRespDto dto1 = new EmployerRespDto(1L, 11L, "employer1", "ABC", "9876543210", VerificationStatus.VERIFIED, "emp1");
+        EmployerRespDto dto2 = new EmployerRespDto(2L, 12L, "employer2", "shine tech", "9876543211", VerificationStatus.PENDING, "emp2");
+
+        when(employerRepository.findAll()).thenReturn(List.of(employer1, employer2));
+        when(employerMapper.mapEntityToDto(employer1)).thenReturn(dto1);
+        when(employerMapper.mapEntityToDto(employer2)).thenReturn(dto2);
+
+        assertEquals(2, employerService.getAll().size());
+
+        verify(employerRepository, times(1)).findAll();
+        verify(employerMapper, times(1)).mapEntityToDto(employer1);
+        verify(employerMapper, times(1)).mapEntityToDto(employer2);
+
+        verifyNoMoreInteractions(employerRepository);
+        verifyNoMoreInteractions(employerMapper);
+    }
 }

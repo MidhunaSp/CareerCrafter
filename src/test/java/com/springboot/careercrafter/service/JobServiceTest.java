@@ -19,8 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -248,5 +250,16 @@ public class JobServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> jobService.deleteById(99L, "techcorp"));
 
         verify(jobRepository, times(0)).delete(any(Job.class));
+    }
+
+    // ---- getActiveJobs ----
+    @Test
+    public void getActiveJobsTest() {
+        JobRespDto dto = new JobRespDto(1L, "Java Developer", "Build REST APIs", "BE", "Chennai", "IT",
+                EmploymentType.FULL_TIME, 30000.0, 60000.0, "Apply by email", true, null, 1L, "TCS");
+        when(jobRepository.getActiveJobs(PageRequest.of(0, 5))).thenReturn(List.of(dto));
+
+        assertEquals(1, jobService.getActiveJobs(0, 5).size());
+        verify(jobRepository, times(1)).getActiveJobs(PageRequest.of(0, 5));
     }
 }

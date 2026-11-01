@@ -28,11 +28,11 @@ public class ResumeService {
 
     @Transactional
     public CreatedRespDto add(Long jobSeekerId, ResumeReqDto dto, String loggedInUsername) {
-        // step 1: fetch job seeker from db
+        // step 1: fetch jobseeker from db
         JobSeeker jobSeeker = jobSeekerRepository.findById(jobSeekerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job seeker id invalid & Job seeker not found"));
 
-        // step 2: check that the logged-in user owns this job seeker account
+        // step 2: check that the logged-in user owns this jobseeker account
         if (!jobSeeker.getUser().getUsername().equals(loggedInUsername))
             throw new OwnershipException("You can add resumes only to your own account");
 

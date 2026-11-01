@@ -24,7 +24,7 @@ public class MessageController {
                               @RequestParam(value = "jobApplicationId", required = false) Long jobApplicationId,
                               @Valid @RequestBody MessageReqDto dto,
                               Principal principal) {
-        return messageService.add(senderId, receiverId, jobApplicationId, dto, principal.getName());
+      return messageService.add(senderId,receiverId,jobApplicationId,dto,principal.getName());
     }
 
     @GetMapping("/api/message/inbox/{userId}")
