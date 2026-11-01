@@ -211,4 +211,11 @@ public class NotificationServiceTest {
 
         verifyNoMoreInteractions(notificationRepository);
     }
+
+    @Test
+    public void deleteByIdTest_NotFound() {
+        when(notificationRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> notificationService.deleteById(1L, "john"));
+        verify(notificationRepository, times(0)).delete(any(Notification.class));
+    }
 }

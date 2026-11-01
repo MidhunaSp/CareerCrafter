@@ -241,4 +241,17 @@ public class ResumeServiceTest {
 
         verify(resumeRepository, times(1)).saveAll(all);
     }
+
+    @Test
+    public void getByJobSeekerIdTest_NotFound() {
+        when(jobSeekerRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> resumeService.getByJobSeekerId(1L, "john"));
+    }
+
+    @Test
+    public void getByIdTest_NotFound() {
+        when(resumeRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> resumeService.getById(1L, "john"));
+    }
+
 }
