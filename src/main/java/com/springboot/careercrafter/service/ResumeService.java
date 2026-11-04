@@ -6,8 +6,10 @@ import com.springboot.careercrafter.dto.response.ResumeRespDto;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
 import com.springboot.careercrafter.mapper.ResumeMapper;
+import com.springboot.careercrafter.model.JobApplication;
 import com.springboot.careercrafter.model.JobSeeker;
 import com.springboot.careercrafter.model.Resume;
+import com.springboot.careercrafter.repository.JobApplicationRepository;
 import com.springboot.careercrafter.repository.JobSeekerRepository;
 import com.springboot.careercrafter.repository.ResumeRepository;
 import jakarta.transaction.Transactional;
@@ -117,6 +119,30 @@ public class ResumeService {
                 resumeRepository.save(newDefault);
             }
         }
+    }
+
+    private final JobApplicationRepository jobApplicationRepository;
+
+    public void update(Long id, ResumeReqDto dto, String loggedInUsername) {
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resume not found"));
+        checkOwner(resume, loggedInUsername);
+
+        resume.setFileName(dto.fileName());
+        resume.setFilePath(dto.filePath());
+        resume.setLabel(dto.label());
+        resumeRepository.save(resume);
+    }
+
+    // employer opens the resume attached to an application of his own job
+    public ResumeRespDto getByApplicationId(Long jobApplicationId, String loggedInUsername) {
+        JobApplication application = jobApplicationRepository.findById(jobApplicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job application not found"));
+
+        if (!application.getJob().getEmployer().getUser().getUsername().equals(loggedInUsername))
+            throw new OwnershipException("Only the employer of this job can view the applicant's resume");
+
+        return resumeMapper.mapEntityToDto(application.getResume());
     }
 
     private void checkOwner(Resume resume, String loggedInUsername) {

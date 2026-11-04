@@ -1,6 +1,7 @@
 package com.springboot.careercrafter.service;
 
 import com.springboot.careercrafter.dto.request.AdminReqDto;
+import com.springboot.careercrafter.dto.response.AdminRespDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.enums.NotificationType;
 import com.springboot.careercrafter.enums.Role;
@@ -65,5 +66,11 @@ public class AdminService {
                 "Your employer account for " + employer.getCompanyName()
                         + " has been verified. You can now post jobs.",
                 NotificationType.SYSTEM);
+    }
+
+    public AdminRespDto getByUsername(String username) {
+        Admin admin = adminRepository.findByUserUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with username: " + username));
+        return new AdminRespDto(admin.getId(), admin.getName(), username);
     }
 }

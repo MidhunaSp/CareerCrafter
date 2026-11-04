@@ -5,6 +5,7 @@ import com.springboot.careercrafter.dto.response.ApplicationStatusHistoryRespDto
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.EmployerApplicationHistoryRespDto;
 import com.springboot.careercrafter.enums.ApplicationStatus;
+import com.springboot.careercrafter.enums.NotificationType;
 import com.springboot.careercrafter.exception.InvalidCallException;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
@@ -29,6 +30,7 @@ public class ApplicationStatusHistoryService {
     private final ApplicationStatusHistoryRepository historyRepository;
     private final JobApplicationRepository jobApplicationRepository;
     private final ApplicationStatusHistoryMapper historyMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public CreatedRespDto add(Long jobApplicationId, ApplicationStatusHistoryReqDto dto, String loggedInUsername) {
@@ -55,8 +57,11 @@ public class ApplicationStatusHistoryService {
 
         history = historyRepository.save(history);
 
-        log.info("Application {} status changed: {} -> {} by {}",
-                jobApplicationId, oldStatus, dto.status(), loggedInUsername);
+        // step 6: tell the applicant that the status has changed
+        notificationService.notifyUser(application.getApplicant().getUser(),
+                "Your application for " + application.getJob().getTitle() + " is now " + dto.status(),
+                NotificationType.APPLICATION_STATUS_CHANGE);
+
         return new CreatedRespDto(history.getId(), "Status history added");
     }
 

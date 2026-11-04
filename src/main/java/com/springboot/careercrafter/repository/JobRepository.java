@@ -102,4 +102,13 @@ public interface JobRepository extends JpaRepository<Job, Long> {
         where j.active = true
         """)
     List<JobRespDto> getAllActiveJobs();
+
+    @Query("""
+        select new com.springboot.careercrafter.dto.response.JobApplicantCountDto(j.title, count(ja.id))
+        from Job j
+        left join JobApplication ja on ja.job = j
+        where j.employer.user.username = ?1
+        group by j.id, j.title
+        """)
+    List<JobApplicantCountDto> getApplicantCountPerJobByEmployer(String username);
 }

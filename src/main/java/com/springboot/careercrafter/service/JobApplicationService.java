@@ -3,6 +3,7 @@ package com.springboot.careercrafter.service;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.JobApplicationRespDto;
 import com.springboot.careercrafter.enums.ApplicationStatus;
+import com.springboot.careercrafter.enums.NotificationType;
 import com.springboot.careercrafter.exception.InvalidCallException;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
@@ -36,6 +37,7 @@ public class JobApplicationService {
     private final JobSeekerRepository jobSeekerRepository;
     private final ResumeRepository resumeRepository;
     private final ApplicationStatusHistoryRepository historyRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public CreatedRespDto apply(Long jobId, Long applicantId, Long resumeId, String loggedInUsername) {
@@ -85,6 +87,11 @@ public class JobApplicationService {
 
         log.info("Job application submitted: applicationId={}, jobId={}, applicantId={}",
                 application.getId(), jobId, applicantId);
+
+        // step 7: tell the employer that a new application has come
+        notificationService.notifyUser(job.getEmployer().getUser(),
+                applicant.getFullName() + " applied for " + job.getTitle(),
+                NotificationType.NEW_APPLICATION_RECEIVED);
 
         return new CreatedRespDto(application.getId(), "Applied successfully");
     }

@@ -11,10 +11,12 @@ import com.springboot.careercrafter.model.User;
 import com.springboot.careercrafter.repository.NotificationRepository;
 import com.springboot.careercrafter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -37,6 +39,7 @@ public class NotificationService {
         notification.setRead(false);
 
         notification = notificationRepository.save(notification);
+        log.info("Notification created for userId={}", userId);
         return new CreatedRespDto(notification.getId(), "Notification created");
     }
 

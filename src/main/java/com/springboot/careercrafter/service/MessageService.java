@@ -3,6 +3,7 @@ package com.springboot.careercrafter.service;
 import com.springboot.careercrafter.dto.request.MessageReqDto;
 import com.springboot.careercrafter.dto.response.CreatedRespDto;
 import com.springboot.careercrafter.dto.response.MessageRespDto;
+import com.springboot.careercrafter.enums.NotificationType;
 import com.springboot.careercrafter.exception.InvalidCallException;
 import com.springboot.careercrafter.exception.OwnershipException;
 import com.springboot.careercrafter.exception.ResourceNotFoundException;
@@ -13,10 +14,12 @@ import com.springboot.careercrafter.repository.JobApplicationRepository;
 import com.springboot.careercrafter.repository.MessageRepository;
 import com.springboot.careercrafter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageService {
@@ -24,6 +27,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final JobApplicationRepository jobApplicationRepository;
+    private final NotificationService notificationService;
 
     public CreatedRespDto add(Long senderId, Long receiverId, Long jobApplicationId,
                               MessageReqDto dto, String loggedInUsername) {
@@ -57,7 +61,12 @@ public class MessageService {
         message.setContent(dto.content());
         message.setRead(false); // Lombok: boolean isRead -> setRead()
 
+        notificationService.notifyUser(receiver,
+                "New message from " + sender.getUsername(),
+                NotificationType.NEW_MESSAGE);
+
         message = messageRepository.save(message);
+        log.info("Message sent: from={} to={}", senderId, receiverId);
         return new CreatedRespDto(message.getId(), "Message sent");
     }
 
@@ -106,6 +115,7 @@ public class MessageService {
             throw new OwnershipException("This message does not belong to you");
 
         messageRepository.delete(message);
+        log.info("Message deleted: id={} by {}", id, loggedInUsername);
     }
 
     private void checkUser(Long userId, String loggedInUsername) {

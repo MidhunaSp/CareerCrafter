@@ -27,16 +27,23 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // onboarding APIs (Registration)
                         .requestMatchers(HttpMethod.POST, "/api/jobseeker/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/employer/add").permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/api/admin/add").permitAll()
 
-                        // login API
+                        // login API and user details API
                         .requestMatchers(HttpMethod.GET, "/api/auth/login").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/user-details").authenticated()
 
                         // anyone can browse the jobs
                         .requestMatchers(HttpMethod.GET, "/api/job/all", "/api/job/filter", "/api/job/{id}").permitAll()
+
+                        // EMPLOYER stats - must stay ABOVE the admin "/api/stats/**" rule
+                        .requestMatchers(HttpMethod.GET, "/api/stats/employer/**").hasAuthority("EMPLOYER")
 
                         // ADMIN
                         .requestMatchers(HttpMethod.PUT, "/api/employer/verify/**").hasAuthority("ADMIN")
@@ -44,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/employer/all", "/api/employer/filter",
                                 "/api/employer/by-verification", "/api/jobseeker/all").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/notification/add/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/by-username").hasAuthority("ADMIN")
 
                         // ADMIN OR EMPLOYER (employer searches the candidates)
                         .requestMatchers(HttpMethod.GET, "/api/jobseeker/filter").hasAnyAuthority("ADMIN", "EMPLOYER")
@@ -55,9 +63,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/job/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.GET, "/api/jobApplication/job/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.POST, "/api/applicationStatusHistory/add/**").hasAuthority("EMPLOYER")
+                        .requestMatchers(HttpMethod.GET, "/api/applicationStatusHistory/employer/**").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.PUT, "/api/employer/{id}").hasAuthority("EMPLOYER")
                         .requestMatchers(HttpMethod.DELETE, "/api/employer/{id}").hasAuthority("EMPLOYER")
-                        .requestMatchers(HttpMethod.GET, "/api/applicationStatusHistory/employer/**").hasAuthority("EMPLOYER")
+                        // employer views the applicant's resume - must stay ABOVE the "/api/resume/**" rule
+                        .requestMatchers(HttpMethod.GET, "/api/resume/application/**").hasAuthority("EMPLOYER")
 
                         // JOB_SEEKER
                         .requestMatchers(HttpMethod.POST, "/api/jobApplication/add/**").hasAuthority("JOB_SEEKER")
@@ -67,13 +77,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/savedJob/**").hasAuthority("JOB_SEEKER")
                         .requestMatchers(HttpMethod.PUT, "/api/jobseeker/{id}").hasAuthority("JOB_SEEKER")
                         .requestMatchers(HttpMethod.DELETE, "/api/jobseeker/{id}").hasAuthority("JOB_SEEKER")
+                        .requestMatchers(HttpMethod.GET, "/api/job/recommended/**").hasAuthority("JOB_SEEKER")
 
                         // JOB_SEEKER or EMPLOYER
                         .requestMatchers(HttpMethod.GET, "/api/jobApplication/{id}").hasAnyAuthority("JOB_SEEKER", "EMPLOYER")
                         .requestMatchers(HttpMethod.GET, "/api/applicationStatusHistory/**").hasAnyAuthority("JOB_SEEKER", "EMPLOYER")
                         .requestMatchers("/api/message/**").hasAnyAuthority("JOB_SEEKER", "EMPLOYER")
 
-                        // everything else (notifications, get employer / job seeker...) needs a login
+                        // everything else (notifications, get employer / jobseeker...) needs a login
                         .anyRequest().authenticated()
                 );
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

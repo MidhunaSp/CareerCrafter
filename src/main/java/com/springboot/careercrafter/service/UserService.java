@@ -1,7 +1,10 @@
 package com.springboot.careercrafter.service;
 
+import com.springboot.careercrafter.dto.response.DetailsDto;
 import com.springboot.careercrafter.enums.Role;
+import com.springboot.careercrafter.exception.InactiveUserException;
 import com.springboot.careercrafter.exception.InvalidCallException;
+import com.springboot.careercrafter.exception.ResourceNotFoundException;
 import com.springboot.careercrafter.model.User;
 import com.springboot.careercrafter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +30,27 @@ public class UserService {
         user.setRole(role);
         log.info("User created: username={}, role={}", username, role);
         return userRepository.save(user);
+    }
+
+    public User getByUsername(String username) {
+        return userRepository.loadUserByUsername(username);
+    }
+
+    public DetailsDto getUserDetails(String loggedInUsername) {
+        DetailsDto detailsDto = userRepository.getUserDetails(loggedInUsername);
+        if (detailsDto == null)
+            throw new ResourceNotFoundException("User not found");
+        if(!detailsDto.isActive())
+            throw new InactiveUserException("User is disabled");
+        return detailsDto;
+    }
+
+    public void updateUserStatus(String username, boolean active) {
+        User user = userRepository.loadUserByUsername(username);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        user.setActive(active);
+        userRepository.save(user);
     }
 }

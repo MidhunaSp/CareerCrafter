@@ -12,10 +12,12 @@ import com.springboot.careercrafter.repository.JobRepository;
 import com.springboot.careercrafter.repository.JobSeekerRepository;
 import com.springboot.careercrafter.repository.SavedJobRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SavedJobService {
@@ -32,11 +34,11 @@ public class SavedJobService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job id invalid & Job not found"));
 
-        // step 2: check that the logged-in user is this job seeker
+        // step 2: check that the logged-in user is this jobseeker
         if (!jobSeeker.getUser().getUsername().equals(loggedInUsername))
             throw new OwnershipException("You can save jobs only to your own account");
 
-        // step 3: the same job cannot be saved twice by the same job seeker
+        // step 3: the same job cannot be saved twice by the same jobseeker
         if (savedJobRepository.existsByJobSeekerIdAndJobId(jobSeekerId, jobId))
             throw new InvalidCallException("Job already saved");
 
@@ -46,6 +48,9 @@ public class SavedJobService {
         savedJob.setJob(job);
 
         savedJob = savedJobRepository.save(savedJob);
+
+        log.info("Job saved: jobSeekerId={}, jobId={}", jobSeekerId, jobId);
+
         return new CreatedRespDto(savedJob.getId(), "Job saved");
     }
 
@@ -69,5 +74,6 @@ public class SavedJobService {
             throw new OwnershipException("This saved job belongs to another job seeker");
 
         savedJobRepository.delete(savedJob);
+        log.info("Saved job removed: id={} by {}", id, loggedInUsername);
     }
 }

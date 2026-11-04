@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class ResumeController {
 
     private final ResumeService resumeService;
@@ -37,6 +38,16 @@ public class ResumeController {
     @PutMapping("/api/resume/{id}/default")
     public void makeDefault(@PathVariable Long id, Principal principal) {
         resumeService.makeDefault(id, principal.getName());
+    }
+
+    @PutMapping("/api/resume/{id}")
+    public void update(@PathVariable Long id, @Valid @RequestBody ResumeReqDto dto, Principal principal) {
+        resumeService.update(id, dto, principal.getName());
+    }
+
+    @GetMapping("/api/resume/application/{jobApplicationId}")
+    public ResumeRespDto getByApplicationId(@PathVariable Long jobApplicationId, Principal principal) {
+        return resumeService.getByApplicationId(jobApplicationId, principal.getName());
     }
 
     @DeleteMapping("/api/resume/{id}")

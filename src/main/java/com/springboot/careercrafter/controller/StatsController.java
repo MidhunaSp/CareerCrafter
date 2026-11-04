@@ -6,13 +6,16 @@ import com.springboot.careercrafter.dto.response.IndustryCountDto;
 import com.springboot.careercrafter.dto.response.JobApplicantCountDto;
 import com.springboot.careercrafter.service.StatsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class StatsController {
 
     private final StatsService statsService;
@@ -35,5 +38,15 @@ public class StatsController {
     @GetMapping("/api/stats/applications-by-status")
     public List<ApplicationStatusStatDto> getApplicationStatusStat() {
         return statsService.getApplicationStatusStat();
+    }
+
+    @GetMapping("/api/stats/employer/applicants-per-job")
+    public List<JobApplicantCountDto> getMyApplicantCountPerJob(Principal principal) {
+        return statsService.getApplicantCountPerJobByEmployer(principal.getName());
+    }
+
+    @GetMapping("/api/stats/employer/applications-by-status")
+    public List<ApplicationStatusStatDto> getMyApplicationStatusStat(Principal principal) {
+        return statsService.getApplicationStatusStatByEmployer(principal.getName());
     }
 }

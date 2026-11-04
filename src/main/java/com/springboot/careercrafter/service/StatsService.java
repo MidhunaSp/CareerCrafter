@@ -33,4 +33,12 @@ public class StatsService {
     public List<ApplicationStatusStatDto> getApplicationStatusStat() {
         return jobApplicationRepository.getApplicationStatusStat();
     }
+
+    public List<JobApplicantCountDto> getApplicantCountPerJobByEmployer(String username) {
+        return jobRepository.getApplicantCountPerJobByEmployer(username);
+    }
+
+    public List<ApplicationStatusStatDto> getApplicationStatusStatByEmployer(String username) {
+        return jobApplicationRepository.getApplicationStatusStatByEmployer(username);
+    }
 }

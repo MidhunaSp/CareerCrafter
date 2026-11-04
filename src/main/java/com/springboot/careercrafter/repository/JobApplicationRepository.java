@@ -51,4 +51,11 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
         """)
     List<JobApplication> findAllByEmployerUsername(String username);
 
+    @Query("""
+        select new com.springboot.careercrafter.dto.response.ApplicationStatusStatDto(ja.status, count(ja.id))
+        from JobApplication ja
+        where ja.job.employer.user.username = ?1
+        group by ja.status
+        """)
+    List<ApplicationStatusStatDto> getApplicationStatusStatByEmployer(String username);
 }
